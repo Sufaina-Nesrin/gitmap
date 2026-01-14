@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "fastify": "^5.6.2"
+  },
+  "name": "gitmap",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sufaina-Nesrin/gitmap.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Sufaina-Nesrin/gitmap/issues"
+  },
+  "homepage": "https://github.com/Sufaina-Nesrin/gitmap#readme"
+}
