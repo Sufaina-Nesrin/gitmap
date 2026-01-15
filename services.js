@@ -1,27 +1,26 @@
-import fetch from "node-fetch";
-import crypto from "crypto";
+const crypto = require("crypto");
 
 const GITHUB_API = "https://api.github.com";
 
-export async function fetchRepoDetails(owner, repo) {
-  const res = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
-    headers: {
-      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-      Accept: "application/vnd.github+json",
-    },
+async function fetchRepoDetails(owner, repo) {
+  const headers = {
+    Accept: "application/vnd.github+json",
+  };
+
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+    headers,
   });
 
   if (!res.ok) {
-    throw new Error("Failed to fetch repo details");
+    throw new Error(`GitHub API error: ${res.status}`);
   }
 
   return res.json();
 }
 
-export async function fetchRepoLanguages(owner, repo) {
+async function fetchRepoLanguages(owner, repo) {
   const res = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/languages`, {
     headers: {
-      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
       Accept: "application/vnd.github+json",
     },
   });
@@ -32,8 +31,29 @@ export async function fetchRepoLanguages(owner, repo) {
 
   return res.json();
 }
+function parseGithubRepo(repoUrl) {
+  try {
+    const url = new URL(repoUrl);
 
-export async function analyzeRepository(repoUrl) {
+    if (url.hostname !== "github.com") {
+      throw new Error("Not a GitHub URL");
+    }
+
+    const parts = url.pathname.split("/").filter(Boolean);
+
+    if (parts.length < 2) {
+      throw new Error("Invalid GitHub repository URL");
+    }
+
+    const [owner, repo] = parts;
+
+    return { owner, repo };
+  } catch (err) {
+    throw new Error("Invalid repository URL format");
+  }
+}
+
+async function analyzeRepository(repoUrl) {
   const { owner, repo } = parseGithubRepo(repoUrl);
   const analysisId = crypto.randomBytes(4).toString("hex");
 
@@ -61,3 +81,5 @@ export async function analyzeRepository(repoUrl) {
     message: "Repository metadata analyzed",
   };
 }
+
+module.exports = { analyzeRepository, fetchRepoLanguages, fetchRepoDetails };
