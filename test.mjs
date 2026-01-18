@@ -81,35 +81,35 @@ INSTRUCTIONS:
 
 // Example usage
 const myFiles =
-  // "index.js, routes/user.js, services/db.js, utils/logger.js, package.json";
   ".github/workflows/ci.yml, .gitignore, README.md, app/api/auth/route.ts, app/ji/login/route.js, app/api/preference/route.ts, app/api/recipe/route.ts, app/api/register/route.ts, app/api/test/route.ts, app/favicon.ico, app/globals.css, app/layout.tsx, app/login/page.tsx, app/page.tsx, app/signup/page.tsx, eslint.config.mjs, lib/cache/preference.ts, lib/jwt.ts, lib/middleware.ts, lib/mongo.ts, models/Note.ts, models/Preference.ts, models/User.ts, next.config.ts, package-lock.json, package.json, postcss.config.mjs, public/file.svg, public/globe.svg, public/next.svg, public/vercel.svg, public/window.svg, recipe.json, tsconfig.json";
-// getRepoAnalysis(myFiles);
-let myRepoFiles = [
-  "app/api/auth/route.ts",
-  "app/api/login/route.js",
-  "app/api/preference/route.ts",
-  "app/api/recipe/route.ts",
-  "app/api/register/route.ts",
-  "app/api/test/route.ts",
-  "app/favicon.ico",
-  "app/layout.tsx",
-  "app/login/page.tsx",
-  "app/page.tsx",
-  "app/signup/page.tsx",
-  "eslint.config.mjs",
-  "lib/cache/preference.ts",
-  "lib/jwt.ts",
-  "lib/middleware.ts",
-  "lib/mongo.ts",
-  "models/Note.ts",
-  "models/Preference.ts",
-  "models/User.ts",
-  "next.config.ts",
-  "package-lock.json",
-  "package.json",
-  "postcss.config.mjs",
-  "recipe.json",
-  "tsconfig.json",
-];
-const manifest = await getManifestFromAI(myRepoFiles);
-console.log("The manifest file is:", manifest);
+let result = await getRepoAnalysis(myFiles);
+console.log("resutl--", result);
+// let myRepoFiles = [
+//   "app/api/auth/route.ts",
+//   "app/api/login/route.js",
+//   "app/api/preference/route.ts",
+//   "app/api/recipe/route.ts",
+//   "app/api/register/route.ts",
+//   "app/api/test/route.ts",
+//   "app/favicon.ico",
+//   "app/layout.tsx",
+//   "app/login/page.tsx",
+//   "app/page.tsx",
+//   "app/signup/page.tsx",
+//   "eslint.config.mjs",
+//   "lib/cache/preference.ts",
+//   "lib/jwt.ts",
+//   "lib/middleware.ts",
+//   "lib/mongo.ts",
+//   "models/Note.ts",
+//   "models/Preference.ts",
+//   "models/User.ts",
+//   "next.config.ts",
+//   "package-lock.json",
+//   "package.json",
+//   "postcss.config.mjs",
+//   "recipe.json",
+//   "tsconfig.json",
+// ];
+// const manifest = await getManifestFromAI(myRepoFiles);
+// console.log("The manifest file is:", manifest);

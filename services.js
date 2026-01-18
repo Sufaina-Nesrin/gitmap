@@ -1,9 +1,7 @@
 const crypto = require("crypto");
 const axios = require("axios");
-const { rankImportantFiles } = require("./routes/utils");
-
+const { parseManifest } = require("./parsers");
 const GITHUB_API = "https://api.github.com";
-
 
 async function fetchRepoDetails(owner, repo) {
   const headers = {
@@ -95,14 +93,14 @@ function fileArrayToString(files) {
   return `"${files.join(", ")}"`;
 }
 
-async function getRepoFilePaths(owner, repo, branch = "master") {
+async function getRepoFilePaths(owner, repo, branch = "main") {
   const res = await fetch(
     `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
     {
       headers: {
         Accept: "application/vnd.github+json",
       },
-    }
+    },
   );
 
   if (!res.ok) {
@@ -116,7 +114,7 @@ async function getRepoFilePaths(owner, repo, branch = "master") {
     .map((item) => item.path); // extract file path
 }
 
-async function fetchGitHubFile(repoUrl, filePath = "package.json") {
+async function fetchGitHubFile(repoUrl, filePath = "pyproject.toml") {
   try {
     const { owner, repo } = parseGithubRepo(repoUrl);
 
@@ -180,7 +178,7 @@ function filterCodeFiles(files) {
     // ignore exact files or folders
     if (
       IGNORE_FOLDERS.some(
-        (ignore) => file === ignore || file.startsWith(ignore + "/")
+        (ignore) => file === ignore || file.startsWith(ignore + "/"),
       )
     ) {
       return false;
@@ -340,56 +338,6 @@ function getHeuristicEntrypoint(files) {
 
   return candidates[0].file;
 }
-async function fetchRepoTree(owner, repo) {
-  const repoRes = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
-    headers: { Accept: "application/vnd.github+json" },
-  });
-
-  if (!repoRes.ok) throw new Error("Failed to fetch repo details for branch");
-
-  const repoDetails = await repoRes.json();
-  const branch = repoDetails.default_branch;
-
-  const treeRes = await fetch(
-    `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
-    {
-      headers: { Accept: "application/vnd.github+json" },
-    }
-  );
-
-  if (!treeRes.ok) throw new Error("Failed to fetch repo tree");
-
-  const treeData = await treeRes.json();
-  return treeData.tree
-    .filter((item) => item.type === "blob")
-    .map((item) => item.path);
-}
-
-
-async function getRankedFiles(repoUrl, topN = 10) {
-  const { owner, repo } = parseGithubRepo(repoUrl);
-
-  const repoDetails = await fetchRepoDetails(owner, repo);
-  const primaryLanguage = repoDetails.language;
-
-  const filePaths = await fetchRepoTree(owner, repo);
-
-  const ranked = rankImportantFiles(filePaths, primaryLanguage, topN);
-
-  return {
-    repo: `${owner}/${repo}`,
-    primaryLanguage,
-    totalFiles: filePaths.length,
-    rankedFiles: ranked,
-  };
-}
-
-module.exports = {
-  analyzeRepository,
-  fetchRepoLanguages,
-  fetchRepoDetails,
-  getRankedFiles,
-};
 
 // STEP 1A: Node
 async function getTheMainFile() {
@@ -424,7 +372,7 @@ async function getTheMainFile() {
     const manifestEntry = getEntrypointFromManifest(
       manifestName,
       manifestContent,
-      files
+      files,
     );
     if (manifestEntry) {
       console.log("entry:", manifestEntry);
@@ -442,6 +390,118 @@ async function getTheMainFile() {
   } catch (err) {
     console.log("err", err.message);
   }
+}
+
+//framework or not can be
+async function isFrameworkManagedProject() {
+  try {
+    let repoUrl = "https://github.com/cookiecutter/cookiecutter-django";
+    let manifest = await fetchGitHubFile(repoUrl);
+
+    manifest = parseManifest("pyproject.toml", manifest);
+    if (!manifest) return false;
+
+    const scriptsText = Object.values(manifest.scripts || {})
+      .join(" ")
+      .toLowerCase();
+
+    const deps = {
+      ...manifest.dependencies,
+      ...manifest.devDependencies,
+    };
+
+    const FULLSTACK_FRAMEWORKS = [
+      "next.js",
+      "nextjs",
+      "remix",
+      "nuxt",
+      "sveltekit",
+      "astro",
+      "blitz",
+      "redwoodjs",
+      "laravel",
+      "rails",
+      "django",
+    ];
+
+    const FRAMEWORK_DEP_KEYWORDS = [
+      "next",
+      "django",
+      "rails",
+      "@angular/core",
+      "nuxt",
+      "@sveltejs/kit",
+      "astro",
+      "remix",
+      "spring-boot",
+      "laravel",
+    ];
+
+    if (FRAMEWORK_CLI_KEYWORDS.some((k) => scriptsText.includes(k))) {
+      return true;
+    }
+
+    if (
+      Object.keys(deps || {}).some((dep) =>
+        FRAMEWORK_DEP_KEYWORDS.some((fw) => dep.includes(fw)),
+      )
+    ) {
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    console.log(err?.message);
+  }
+}
+
+detectFrameworks();
+
+//-----------------------------------DAY-03------------------------------------------
+//DETECTING-FRAMEWORKS---------------------------------------------------------------
+async function detectFrameworks() {
+  const FRAMEWORKS = [
+    // React ecosystem
+    "react",
+    "next.js",
+    "nextjs",
+    "gatsby",
+    "remix",
+    "vite",
+    "create-react-app",
+    "vue",
+    "nuxt",
+    "nuxt.js",
+    "vitepress",
+    "angular",
+    "@angular/core",
+    "svelte",
+    "sveltekit",
+    "astro",
+    "solidjs",
+    "qwik",
+    "next.js",
+    "nextjs",
+    "remix",
+    "nuxt",
+    "sveltekit",
+    "astro",
+    "blitz",
+    "redwoodjs",
+    "laravel",
+    "rails",
+    "django",
+  ];
+
+  let repoUrl = "https://github.com/cookiecutter/cookiecutter-django";
+  let manifest = await fetchGitHubFile(repoUrl);
+  manifest = manifest.toLowerCase();
+
+  const detect = (signals) => signals.filter((sig) => manifest.includes(sig));
+
+  let result = detect(FRAMEWORKS);
+
+  return result;
 }
 
 // getTheMainFile();
