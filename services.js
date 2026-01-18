@@ -1,7 +1,9 @@
 const crypto = require("crypto");
 const axios = require("axios");
+const { rankImportantFiles } = require("./routes/utils");
 
 const GITHUB_API = "https://api.github.com";
+
 
 async function fetchRepoDetails(owner, repo) {
   const headers = {
@@ -338,6 +340,56 @@ function getHeuristicEntrypoint(files) {
 
   return candidates[0].file;
 }
+async function fetchRepoTree(owner, repo) {
+  const repoRes = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
+    headers: { Accept: "application/vnd.github+json" },
+  });
+
+  if (!repoRes.ok) throw new Error("Failed to fetch repo details for branch");
+
+  const repoDetails = await repoRes.json();
+  const branch = repoDetails.default_branch;
+
+  const treeRes = await fetch(
+    `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+    {
+      headers: { Accept: "application/vnd.github+json" },
+    }
+  );
+
+  if (!treeRes.ok) throw new Error("Failed to fetch repo tree");
+
+  const treeData = await treeRes.json();
+  return treeData.tree
+    .filter((item) => item.type === "blob")
+    .map((item) => item.path);
+}
+
+
+async function getRankedFiles(repoUrl, topN = 10) {
+  const { owner, repo } = parseGithubRepo(repoUrl);
+
+  const repoDetails = await fetchRepoDetails(owner, repo);
+  const primaryLanguage = repoDetails.language;
+
+  const filePaths = await fetchRepoTree(owner, repo);
+
+  const ranked = rankImportantFiles(filePaths, primaryLanguage, topN);
+
+  return {
+    repo: `${owner}/${repo}`,
+    primaryLanguage,
+    totalFiles: filePaths.length,
+    rankedFiles: ranked,
+  };
+}
+
+module.exports = {
+  analyzeRepository,
+  fetchRepoLanguages,
+  fetchRepoDetails,
+  getRankedFiles,
+};
 
 // STEP 1A: Node
 async function getTheMainFile() {
