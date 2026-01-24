@@ -2,12 +2,12 @@ const { fetchRepoLanguages } = require("../services");
 const { GLOBAL_KEYWORDS, FRAMEWORK_KEYWORDS } = require("./signal");
 
 function detectFramework(filePaths = []) {
-  const paths = filePaths.map((p) => p.toLowerCase());
+  const paths = filePaths?.map((p) => p.toLowerCase());
 
-  const hasEnd = (name) => paths.some((p) => p.endsWith(name));
-  const hasAnyEnd = (names) => names.some((n) => hasEnd(n));
-  const hasIncludes = (part) => paths.some((p) => p.includes(part));
-  const hasAnyIncludes = (parts) => parts.some((x) => hasIncludes(x));
+  const hasEnd = (name) => paths?.some((p) => p.endsWith(name));
+  const hasAnyEnd = (names) => names?.some((n) => hasEnd(n));
+  const hasIncludes = (part) => paths?.some((p) => p.includes(part));
+  const hasAnyIncludes = (parts) => parts?.some((x) => hasIncludes(x));
 
   // ---------- TOOLING DETECTION ----------
   const tooling = [];
@@ -100,29 +100,32 @@ function detectFramework(filePaths = []) {
         return s;
       },
     },
-{
-  name: "Next.js",
-  score: () => {
-    const hasNextConfig = hasAnyEnd([
-      "next.config.js",
-      "next.config.ts",
-      "next.config.mjs",
-    ]);
+    {
+      name: "Next.js",
+      score: () => {
+        const hasNextConfig = hasAnyEnd([
+          "next.config.js",
+          "next.config.ts",
+          "next.config.mjs",
+        ]);
 
-    if (!hasNextConfig) return 0;
+        if (!hasNextConfig) return 0;
 
-    const hasRealNextStructure =
-      paths.some((p) => p.startsWith("pages/_app.")) ||
-      paths.some((p) => p.startsWith("pages/_document.")) ||
-      paths.some((p) => p.startsWith("app/layout.")) ||
-      paths.some((p) => p.startsWith("app/page."));
+        const hasRealNextStructure =
+          paths.some((p) => p.startsWith("pages/_app.")) ||
+          paths.some((p) => p.startsWith("pages/_document.")) ||
+          paths.some((p) => p.startsWith("app/layout.")) ||
+          paths.some((p) => p.startsWith("app/page."));
 
-    if (!hasRealNextStructure) return 0;
-    console.log("NEXT CONFIG MATCHES:", paths.filter(p => p.includes("next.config")));
+        if (!hasRealNextStructure) return 0;
+        console.log(
+          "NEXT CONFIG MATCHES:",
+          paths.filter((p) => p.includes("next.config")),
+        );
 
-    return 10;
-  },
-},
+        return 10;
+      },
+    },
 
     {
       name: "Express/Node",
@@ -179,20 +182,45 @@ function detectFramework(filePaths = []) {
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  const backend = backendScores[0]?.framework || "Unknown";
+  const backend = backendScores[0]?.framework || "None";
+  const frontendPaths = paths.filter(
+    (p) =>
+      !p.includes("documentation/") &&
+      !p.includes("docs/") &&
+      !p.includes("antora/") &&
+      !p.includes("samples/") &&
+      !p.includes("example/"),
+  );
+
+  const fHasEnd = (name) => frontendPaths.some((p) => p.endsWith(name));
+  const fHasAnyEnd = (names) => names.some((n) => fHasEnd(n));
+  const fHasIncludes = (part) => frontendPaths.some((p) => p.includes(part));
+  const fHasAnyIncludes = (parts) => parts.some((x) => fHasIncludes(x));
 
   const frontendCandidates = [
     {
       name: "Next.js",
       score: () => {
-        let s = 0;
-        if (hasAnyEnd(["next.config.js", "next.config.ts", "next.config.mjs"]))
-          s += 4;
-        if (hasAnyIncludes(["/pages/", "/app/"])) s += 3;
-        if (hasEnd("package.json")) s += 1;
-        return s;
+        const hasNextConfig = fHasAnyEnd([
+          "next.config.js",
+          "next.config.ts",
+          "next.config.mjs",
+        ]);
+
+        if (!hasNextConfig) return 0;
+
+        const hasRealNextStructure =
+          frontendPaths.some((p) => p.startsWith("pages/_app.")) ||
+          frontendPaths.some((p) => p.startsWith("pages/_document.")) ||
+          frontendPaths.some((p) => p.startsWith("app/layout.")) ||
+          frontendPaths.some((p) => p.startsWith("app/page."));
+
+        if (!hasRealNextStructure) return 0;
+
+        return 10;
       },
     },
+
     {
       name: "React",
       score: () => {
@@ -242,7 +270,6 @@ function detectFramework(filePaths = []) {
 
   const frontend = frontendScores[0]?.framework || "Unknown";
 
-
   const detected = {
     backend: backendScores.slice(0, 3),
     frontend: frontendScores.slice(0, 3),
@@ -257,7 +284,7 @@ function detectFramework(filePaths = []) {
 }
 
 function scoreFile(path, framework) {
-  const p = path.toLowerCase();
+  const p = path?.toLowerCase();
   const depth = p.split("/").length - 1;
   let score = 0;
 
@@ -305,6 +332,39 @@ function scoreFile(path, framework) {
     "src/main.rs",
   ];
 
+  if (framework?.backend === "Spring Boot") {
+    if (p.includes("src/main/java")) score += 80;
+    if (p.includes("src/main/kotlin")) score += 80;
+    if (p.includes("src/main/resources")) score += 50;
+  }
+
+  if (framework?.backend === "Rust") {
+    if (p.includes("src/main.rs")) score += 80;
+    if (p.includes("src/lib.rs")) score += 60;
+    if (p.endsWith("cargo.toml")) score += 60;
+  }
+
+  if (framework?.backend === "C/C++") {
+    if (p.endsWith("cmakelists.txt")) score += 70;
+    if (p.includes("/src/")) score += 30;
+    if (p.endsWith("main.c") || p.endsWith("main.cpp")) score += 80;
+    if (p.includes("/include/")) score += 25;
+  }
+
+  if (framework?.backend === ".NET") {
+    if (p.endsWith(".csproj")) score += 80;
+    if (p.endsWith("program.cs")) score += 70;
+    if (p.includes("/controllers/")) score += 35;
+    if (p.includes("/startup.cs")) score += 40;
+  }
+
+  const frontendPaths = paths.filter(
+    (p) =>
+      !p.includes("documentation/") &&
+      !p.includes("docs/") &&
+      !p.includes("antora/"),
+  );
+
   if (entryBoostFiles.some((f) => p.endsWith(f))) score += 40;
 
   score += Math.max(0, 30 - depth * 6);
@@ -312,11 +372,9 @@ function scoreFile(path, framework) {
   if (p.includes("node_modules")) score -= 100;
   if (p.includes("dist") || p.includes("build")) score -= 20;
   if (p.includes("test") || p.includes("__tests__")) score -= 15;
-
   if (p.includes(".vscode/")) score -= 50;
   if (p.split("/").pop().startsWith(".")) score -= 40;
   if (p.includes(".github/")) score -= 80;
-
   if (p.includes("pnpm-lock")) score -= 50;
   if (p.includes("poetry.lock")) score -= 50;
   if (p.includes("yarn.lock")) score -= 50;
@@ -325,7 +383,37 @@ function scoreFile(path, framework) {
   if (p.includes(".dockerignore")) score -= 40;
   if (p.includes(".editorconfig")) score -= 40;
   if (p.includes(".prettierrc")) score -= 40;
+  if (p.includes("documentation/")) score -= 200;
+  if (p.includes("docs/")) score -= 200;
+  if (p.includes("examples/")) score -= 200;
+  if (p.includes(".adoc")) score -= 200;
+  if (p.includes("site/")) score -= 200;
+  if (p.includes("storybook/")) score -= 200;
+  if (p.includes("antora/")) score -= 200;
+  if (p.includes(".rst")) score -= 200;
+  if (p.includes(".mdx")) score -= 200;
   if (p.split("/").pop().startsWith(".")) score -= 80;
+  if (p.includes("integration-test/")) score -= 300;
+  if (p.includes("smoke-test/")) score -= 300;
+  if (p.includes("system-test/")) score -= 300;
+  if (p.includes("test/")) score -= 120;
+
+  if (p.startsWith("src/")) score += 30;
+  if (p.startsWith("app/")) score += 25;
+  if (p.includes("/backend/") || p.startsWith("backend/")) score += 25;
+  if (p.includes("/frontend/") || p.startsWith("frontend/")) score += 25;
+  if (p.includes("/server/") || p.startsWith("server/")) score += 20;
+  if (p.includes("/api/")) score += 20;
+  if (p.includes("/lib/")) score += 15;
+  if (p.includes("/packages/")) score += 15;
+  if (p.includes("spring-boot-project/")) score += 120;
+  if (p.includes("module/")) score += 80;
+
+  if (!p.endsWith("readme.md")) {
+    if (p.includes("docs/") || p.includes("documentation/")) score -= 80;
+    if (p.endsWith(".adoc") || p.endsWith(".mdx") || p.endsWith(".rst"))
+      score -= 80;
+  }
 
   return score;
 }

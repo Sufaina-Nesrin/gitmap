@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const axios = require("axios");
-const { rankImportantFiles, detectFramework, scoreFile } = require("./routes/utils");
+const { detectFramework, scoreFile } = require("./routes/utils");
 
 
 const GITHUB_API = "https://api.github.com";
