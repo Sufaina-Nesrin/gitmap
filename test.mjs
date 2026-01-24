@@ -27,7 +27,6 @@ async function getRepoAnalysis(fileList) {
 }
 
 async function getManifestFromAI(rawFileList) {
-  // Known manifest / dependency files across ecosystems
   const COMMON_MANIFESTS = [
     "package.json",
     "requirements.txt",
@@ -41,11 +40,10 @@ async function getManifestFromAI(rawFileList) {
     "Gemfile",
     "mix.exs",
   ];
-
   const fileNames = rawFileList.map((file) => file.split("/").pop());
 
   const foundManifest = COMMON_MANIFESTS.find((manifest) =>
-    fileNames.includes(manifest)
+    fileNames.includes(manifest),
   );
 
   if (foundManifest) {

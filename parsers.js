@@ -122,4 +122,4 @@ function parseManifest(file, raw) {
   }
 }
 
-module.exports = { parseManifest };
+module.exports = { parseManifest, parseRequirements };
