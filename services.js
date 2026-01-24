@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const axios = require("axios");
-const { rankImportantFiles } = require("./routes/utils");
+const { rankImportantFiles, detectFramework, scoreFile } = require("./routes/utils");
+
 
 const GITHUB_API = "https://api.github.com";
 
@@ -34,6 +35,7 @@ async function fetchRepoLanguages(owner, repo) {
 
   return res.json();
 }
+
 function parseGithubRepo(repoUrl) {
   try {
     const url = new URL(repoUrl);
@@ -60,7 +62,6 @@ async function analyzeRepository(repoUrl) {
   const { owner, repo } = parseGithubRepo(repoUrl);
   const analysisId = crypto.randomBytes(4).toString("hex");
 
-  // 1. Fetch metadata
   const repoDetails = await fetchRepoDetails(owner, repo);
   const languages = await fetchRepoLanguages(owner, repo);
   const files = await getRepoFilePaths(owner, repo);
@@ -69,8 +70,6 @@ async function analyzeRepository(repoUrl) {
   console.log("result--", result);
   const finalResult = fileArrayToString(result);
 
-  console.log(finalResult);
-  // 2. Simple classification logic
   const primaryLanguage = repoDetails.language;
   const isFrontend =
     primaryLanguage === "JavaScript" &&
@@ -146,8 +145,8 @@ async function fetchGitHubFile(repoUrl, filePath = "package.json") {
 const IGNORE_EXTENSIONS = [".css", ".svg"];
 
 const IGNORE_PATTERNS = [
-  ".test.", // test files
-  "__tests__", // test folders
+  ".test.", 
+  "__tests__", 
 ];
 
 const IGNORE_FOLDERS = [
@@ -167,17 +166,15 @@ const IGNORE_FOLDERS = [
 
 function filterCodeFiles(files) {
   return files.filter((file) => {
-    // ignore by extension
+      
     if (IGNORE_EXTENSIONS.some((ext) => file.endsWith(ext))) {
       return false;
     }
 
-    // ignore by pattern
     if (IGNORE_PATTERNS.some((pattern) => file.includes(pattern))) {
       return false;
     }
 
-    // ignore exact files or folders
     if (
       IGNORE_FOLDERS.some(
         (ignore) => file === ignore || file.startsWith(ignore + "/")
@@ -189,21 +186,17 @@ function filterCodeFiles(files) {
     return true;
   });
 }
-//---------------------Day-02----------------------------//
 function getNodeEntrypointFromPackageJson(pkg, files) {
   const fileSet = new Set(files);
 
-  // 1. main
   if (pkg.main && fileSet.has(pkg.main)) {
     return pkg.main;
   }
 
-  // 2. exports (string only)
   if (typeof pkg.exports === "string" && fileSet.has(pkg.exports)) {
     return pkg.exports;
   }
 
-  // 3. bin
   if (typeof pkg.bin === "string" && fileSet.has(pkg.bin)) {
     return pkg.bin;
   }
@@ -215,7 +208,6 @@ function getNodeEntrypointFromPackageJson(pkg, files) {
     }
   }
 
-  // 4. start script
   if (pkg.scripts?.start) {
     const match = pkg.scripts.start.match(/node\s+([^\s]+)/);
     if (match && fileSet.has(match[1])) {
@@ -307,17 +299,14 @@ function getHeuristicEntrypoint(files) {
 
     const base = file.split("/").pop();
 
-    // ---- filename-based signals ----
     if (base.startsWith("main.")) score += 5;
     if (base.startsWith("index.")) score += 4;
     if (base.startsWith("app.")) score += 3;
     if (base.startsWith("server.")) score += 3;
 
-    // ---- path-based signals ----
     if (file.startsWith("src/")) score += 2;
-    if (!file.includes("/")) score += 2; // root-level file
+    if (!file.includes("/")) score += 2; 
 
-    // ---- penalties (noise) ----
     if (file.includes("test")) score -= 3;
     if (file.includes("config")) score -= 2;
 
@@ -330,16 +319,15 @@ function getHeuristicEntrypoint(files) {
     return null;
   }
 
-  // pick highest scoring file
   candidates.sort((a, b) => b.score - a.score);
 
-  // if top score is weak or ambiguous → return null
   if (candidates.length > 1 && candidates[0].score === candidates[1].score) {
     return null;
   }
 
   return candidates[0].file;
 }
+
 async function fetchRepoTree(owner, repo) {
   const repoRes = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
     headers: { Accept: "application/vnd.github+json" },
@@ -366,19 +354,35 @@ async function fetchRepoTree(owner, repo) {
 }
 
 
+function getPrimaryLanguageFromBytes(languages = {}) {
+  const entries = Object.entries(languages);
+  if (entries.length === 0) return "Unknown";
+  entries.sort((a, b) => b[1] - a[1]);
+  return entries.slice(0, 2).map(([lang]) => lang)
+}
+
 async function getRankedFiles(repoUrl, topN = 10) {
   const { owner, repo } = parseGithubRepo(repoUrl);
 
   const repoDetails = await fetchRepoDetails(owner, repo);
-  const primaryLanguage = repoDetails.language;
+  const languages = await fetchRepoLanguages(owner, repo);
+  const primaryLanguage = getPrimaryLanguageFromBytes(languages);
+  console.log("primaryLanguage",primaryLanguage)
 
   const filePaths = await fetchRepoTree(owner, repo);
 
-  const ranked = rankImportantFiles(filePaths, primaryLanguage, topN);
+  const framework = detectFramework(filePaths);
+
+  const ranked = filePaths
+    .map((path) => ({ path, score: scoreFile(path, framework) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topN);
+
 
   return {
     repo: `${owner}/${repo}`,
     primaryLanguage,
+    framework, 
     totalFiles: filePaths.length,
     rankedFiles: ranked,
   };
@@ -391,7 +395,6 @@ module.exports = {
   getRankedFiles,
 };
 
-// STEP 1A: Node
 async function getTheMainFile() {
   try {
     let manifestName = "requirements.txt";
@@ -445,9 +448,3 @@ async function getTheMainFile() {
 }
 
 // getTheMainFile();
-module.exports = {
-  analyzeRepository,
-  fetchRepoLanguages,
-  fetchRepoDetails,
-  fetchGitHubFile,
-};
