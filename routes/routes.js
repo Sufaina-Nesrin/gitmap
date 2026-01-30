@@ -1,7 +1,6 @@
 const { getRankedFiles } = require("../services");
 const { getExecutionFlow } = require("./signal");
 const { bucketFiles } = require("./utils");
-const { fetchGitHubFile, getRankedFiles } = require("../services");
 const { fetchAllFiles, fetchFileContent } = require("../extracted");
 const {
   getAllManifests,
