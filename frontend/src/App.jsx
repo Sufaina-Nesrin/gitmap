@@ -1,21 +1,46 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { Routes, Route } from "react-router-dom";
 import "./App.css";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home";
-
+import RequireAuth from "./components/RequireAuth";
+import RequireGuest from "./components/RequireGuest";
+import { AuthProvider } from "./context/AuthContext";
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <>
-      <Login />
-      <Signup />
-      <Home />
-    </>
+    <AuthProvider>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <RequireGuest>
+              <Login />
+            </RequireGuest>
+          }
+        />
+
+        <Route
+          path="/signup"
+          element={
+            <RequireGuest>
+              <Signup />
+            </RequireGuest>
+          }
+        />
+
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <Home />
+            </RequireAuth>
+          }
+        />
+      </Routes>
+    </AuthProvider>
   );
 }
+
+
 
 export default App;
