@@ -1,11 +1,19 @@
 {
   "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/jwt": "^10.0.0",
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
     "crypto": "^1.0.1",
     "dotenv": "^17.2.3",
     "fastify": "^5.6.2",
-    "smol-toml": "^1.6.0"
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.1.5",
+    "smol-toml": "^1.6.0",
+    "zod": "^4.3.6"
   },
   "name": "gitmap",
   "version": "1.0.0",
@@ -16,7 +24,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js"
+    "dev": "nodemon index.js"
   },
   "repository": {
     "type": "git",
