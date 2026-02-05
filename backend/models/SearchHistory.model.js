@@ -9,16 +9,16 @@ const searchHistorySchema = new mongoose.Schema(
       index: true,
     },
 
-    query: {
+    repoUrl: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 200,
+      index: true,
     },
 
-    metadata: {
-      type: mongoose.Schema.Types.Mixed,
-      default: {},
+    analysis: {
+      type: String,
+      required: true,
     },
   },
   {
@@ -27,9 +27,7 @@ const searchHistorySchema = new mongoose.Schema(
   }
 );
 
-// Index for fast recent-history lookup
+// Optional compound index (very useful)
 searchHistorySchema.index({ user: 1, createdAt: -1 });
 
-module.exports =
-  mongoose.models.SearchHistory ||
-  mongoose.model("SearchHistory", searchHistorySchema);
+module.exports = mongoose.model("SearchHistory", searchHistorySchema);

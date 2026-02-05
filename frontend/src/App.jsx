@@ -6,6 +6,8 @@ import Home from "./pages/Home";
 import RequireAuth from "./components/RequireAuth";
 import RequireGuest from "./components/RequireGuest";
 import { AuthProvider } from "./context/AuthContext";
+import NotFound from "./pages/NotFound";
+import Pricing from "./pages/Pricing";
 function App() {
   return (
     <AuthProvider>
@@ -36,6 +38,15 @@ function App() {
             </RequireAuth>
           }
         />
+        <Route
+          path="/pricing"
+          element={
+            <RequireAuth>
+              <Pricing />
+            </RequireAuth>
+          }
+        />
+         <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
   );

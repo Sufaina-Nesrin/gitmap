@@ -42,7 +42,10 @@ const createUser = async (request, reply) => {
     // Generate JWT
     // Generate JWT
     const token = await reply.jwtSign(
-      { userId: user._id },
+      {
+        userId: user._id,
+        username: user.username,
+      },
       { expiresIn: "7d" },
     );
 
@@ -71,26 +74,26 @@ const createUser = async (request, reply) => {
 
 const signInUser = async (request, reply) => {
   try {
-    // Validate request body
     const validatedData = signInSchema.parse(request.body);
     const { email, password } = validatedData;
 
-    // Find user with password explicitly selected
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return reply.code(401).send({ message: "Invalid credentials" });
     }
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return reply.code(401).send({ message: "Invalid credentials" });
     }
 
-    // Generate JWT
+   
     const token = await reply.jwtSign(
-      { userId: user._id },
+      {
+        userId: user._id,
+        username: user.username,
+      },
       { expiresIn: "7d" },
     );
 
@@ -117,4 +120,18 @@ const signInUser = async (request, reply) => {
   }
 };
 
-module.exports = { createUser, signInUser };
+const logout = async (request, reply) => {
+  reply
+    .clearCookie("token", {
+      path: "/",          // must match cookie path
+      httpOnly: true,
+      sameSite: "none",   // match what you used when setting
+      secure: true,       // true in production (https)
+    })
+    .send({
+      success: true,
+      message: "Logged out successfully",
+    });
+};
+
+module.exports = { createUser, signInUser, logout };

@@ -1,8 +1,9 @@
-const {createUser, signInUser} = require('../controllers/user.controller')
+const {createUser, signInUser, logout} = require('../controllers/user.controller')
 
 async function userRoutes(fastify) {
   fastify.post("/signup", createUser);
   fastify.post("/signin", signInUser);
+  fastify.post("/logout", logout)
   fastify.get(
   "/me",
   { preHandler: fastify.authenticate },

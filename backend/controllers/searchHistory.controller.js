@@ -1,19 +1,20 @@
+const { success } = require("zod");
 const SearchHistory = require("../models/SearchHistory.model");
 
 const addSearchHistory = async (request, reply) => {
   try {
     const userId = request.user.userId; // coming from JWT middleware
-    const { query, metadata = {} } = request.body;
+    const {repoUrl, analysis } = request.body;
 
-    if (!query) {
+    if (!repoUrl) {
       return reply.code(400).send({ message: "Query is required" });
     }
 
     // 1️⃣ Insert new search
     await SearchHistory.create({
       user: userId,
-      query,
-      metadata,
+      repoUrl,
+      analysis,
     });
 
     // 2️⃣ Keep only latest 10 searches
@@ -52,6 +53,7 @@ const getAllSearchHistory = async (request, reply) => {
       .lean();
 
     reply.send({
+      success: true,
       count: history.length,
       history,
     });

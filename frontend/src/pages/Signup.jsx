@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 
 function Signup() {
   const navigate = useNavigate();
@@ -9,6 +10,9 @@ function Signup() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { setUser } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,11 +26,14 @@ function Signup() {
     try {
       setLoading(true);
 
-      await api.post("/api/auth/signup", {
+      let res = await api.post("/api/auth/signup", {
         username,
         email,
         password,
       });
+      if (res?.data?.user) {
+        setUser(res?.data?.user);
+      }
 
       navigate("/", { replace: true });
     } catch (err) {
@@ -69,17 +76,29 @@ function Signup() {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-500"
           />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              minLength={8}
+              pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+              title="Password must be at least 8 characters long and include 1 uppercase letter, 1 number, and 1 special symbol"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-500"
+            />
 
-          <input
-            type="password"
-            placeholder="Password"
-            minLength={8}
-            pattern="^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
-            title="Password must be at least 8 characters long and include 1 uppercase letter, 1 number, and 1 special symbol"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-500"
-          />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-emerald-400 transition"
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              <span className="material-icons-outlined text-xl">
+                {showPassword ? "visibility_off" : "visibility"}
+              </span>
+            </button>
+          </div>
 
           <button
             onClick={handleSubmit}
@@ -104,7 +123,10 @@ function Signup() {
         {/* Footer */}
         <p className="text-center text-sm text-slate-400 mt-6">
           Already have an account?{" "}
-          <span className="text-emerald-400 cursor-pointer hover:underline">
+          <span
+            onClick={() => navigate("/login")}
+            className="text-emerald-400 cursor-pointer hover:underline"
+          >
             Login
           </span>
         </p>

@@ -60,7 +60,7 @@ const analyzerepo = async (req, reply) => {
         manifestPath
       );
 
-      aiResult += await getRepoAnalysis(
+      aiResult = aiResult+ "\n\n"+ await getRepoAnalysis(
         files.join("\n"),
         manifestContent
       );
