@@ -17,7 +17,7 @@ const JavaScript = require("tree-sitter-javascript");
 const Python = require("tree-sitter-python");
 const TypeScript = require("tree-sitter-typescript").typescript;
 const Go = require("tree-sitter-go");
-// const Java = require("tree-sitter-java");
+
 const C = require("tree-sitter-c");
 const Cpp = require("tree-sitter-cpp");
 const Rust = require("tree-sitter-rust");
@@ -100,27 +100,6 @@ function normalize(map) {
   return result;
 }
 
-// function isSourceFile(file) {
-//   return (
-//     !file.includes("node_modules") &&
-//     !file.includes("dist") &&
-//     !file.includes("build")
-//   );
-// }
-
-// function detectEntry(files) {
-//   const candidates = files.filter(isSourceFile);
-
-//   if (candidates.length === 0) {
-//     return files.length > 0 ? [files.sort((a, b) => a.split('/').length - b.split('/').length)[0]] : [];
-//   }
-
-//   const mainFile = candidates.find(f => f.endsWith("__main__.py") || f.endsWith("index.js") || f.endsWith("main.ts"));
-//   if (mainFile) return [mainFile];
-
-//   candidates.sort((a, b) => a.split("/").length - b.split("/").length);
-//   return [candidates[0]];
-// }
 
 
 function detectEntry(files) {
@@ -310,7 +289,6 @@ async function rankRepository(owner, repo, filePaths) {
 
   const { graph, reverse } = await buildGraph(owner, repo, filePaths, repoRoot);
 
-  // const reverseScore = reverseDependencyScore(reverse);
   const reverseScore = {};
   for (const file in reverse) {
     reverseScore[file] = reverse[file].length;
