@@ -45,7 +45,6 @@ function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white px-4">
       <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl p-8 backdrop-blur">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">
             Welcome back to <span className="text-emerald-400">Gitmap</span>
@@ -55,7 +54,6 @@ function Login() {
           </p>
         </div>
 
-        {/* Form */}
         <div className="space-y-4">
           <input
             type="email"
@@ -94,19 +92,18 @@ function Login() {
           </button>
         </div>
 
-        {/* Divider */}
         <div className="flex items-center my-6">
           <div className="flex-1 h-px bg-white/10" />
           <span className="px-3 text-xs text-slate-500">OR</span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
-        {/* Google Login */}
+    
         <div className="flex justify-center">
           <div className="g_id_signin"></div>
         </div>
 
-        {/* Footer */}
+
         <p className="text-center text-sm text-slate-400 mt-6">
           Don’t have an account?{" "}
           <span

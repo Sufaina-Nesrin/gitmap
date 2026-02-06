@@ -105,13 +105,13 @@ function Home() {
     setAnalysis(repo.analysis);
     setAnalysedUrl(repo.repoUrl);
   };
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 py-4 border-b border-white/10 backdrop-blur bg-slate-950/80">
-        {/* Left */}
         <div className="flex items-center gap-3">
-          <img src="/vite.svg" alt="Gitmap Logo" className="h-8 w-8" />
+          <img src="/logo.png" alt="Gitmap Logo" style={{ width: "40px", height: "40px" }} />
           <span className="text-xl font-bold tracking-wide">
             Git<span className="text-emerald-400">map</span>
           </span>
@@ -119,24 +119,25 @@ function Home() {
 
         {/* Right */}
         <ul className="flex items-center gap-8 text-sm font-medium">
-          <li
+          {/* <li
             onClick={() => navigate("/")}
             className="cursor-pointer hover:text-emerald-400 transition"
           >
+
             Home
-          </li>
+          </li> */}
           <li
             onClick={() => navigate("/pricing")}
             className="cursor-pointer hover:text-emerald-400 transition"
           >
             Pricing
           </li>
-          <li
+          {/* <li
             onClick={() => navigate("/login")}
             className="cursor-pointer hover:text-emerald-400 transition"
           >
             Login
-          </li>
+          </li> */}
           <li
             onClick={handleLogout}
             className="px-4 py-2 rounded-lg bg-emerald-500 text-black hover:bg-emerald-400 transition cursor-pointer"
@@ -146,9 +147,7 @@ function Home() {
         </ul>
       </nav>
 
-      {/* Layout */}
       <div className="flex pt-[64px]">
-        {/* Sidebar */}
         <aside className="fixed top-[64px] left-0 w-64 h-[calc(100vh-64px)] border-r border-white/10 bg-slate-950/60 backdrop-blur z-30">
           <div className="p-4">
             <h2 className="text-sm font-semibold text-slate-400 mb-4 uppercase tracking-wider">
@@ -176,9 +175,7 @@ function Home() {
           </div>
         </aside>
 
-        {/* Main */}
         <main className="ml-64 flex-1 h-[calc(100vh-64px)] overflow-y-auto flex flex-col items-center px-4 pt-16">
-          {/* Heading */}
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
             Visualize Any GitHub Repository
           </h1>
@@ -187,7 +184,6 @@ function Home() {
             dependencies, and architecture.
           </p>
 
-          {/* Input Section */}
           <div className="flex w-full max-w-3xl gap-3">
             <input
               type="text"
@@ -212,7 +208,6 @@ function Home() {
               </p>
             </div>
           )}
-          {/* Output Section */}
           {(analysis || error || loading) && (
             <div className="w-full max-w-4xl mt-7 p-6 rounded-xl bg-slate-900 border border-white/10">
               <h2 className="text-lg font-semibold mb-3 text-emerald-400">
@@ -235,7 +230,6 @@ function Home() {
             </div>
           )}
 
-          {/* User Profile (Bottom Right) */}
           <div className="fixed bottom-6 left-6 z-50">
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/80 backdrop-blur border border-white/10 shadow-lg hover:bg-slate-900 transition cursor-pointer">
               <img
