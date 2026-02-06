@@ -1,287 +1,287 @@
 const { fetchRepoLanguages } = require("../services");
 const { GLOBAL_KEYWORDS, FRAMEWORK_KEYWORDS } = require("./signal");
 
-function detectFramework(filePaths = []) {
-  const paths = filePaths?.map((p) => p.toLowerCase());
+// function detectFramework(filePaths = []) {
+//   const paths = filePaths?.map((p) => p.toLowerCase());
 
-  const hasEnd = (name) => paths?.some((p) => p.endsWith(name));
-  const hasAnyEnd = (names) => names?.some((n) => hasEnd(n));
-  const hasIncludes = (part) => paths?.some((p) => p.includes(part));
-  const hasAnyIncludes = (parts) => parts?.some((x) => hasIncludes(x));
+//   const hasEnd = (name) => paths?.some((p) => p.endsWith(name));
+//   const hasAnyEnd = (names) => names?.some((n) => hasEnd(n));
+//   const hasIncludes = (part) => paths?.some((p) => p.includes(part));
+//   const hasAnyIncludes = (parts) => parts?.some((x) => hasIncludes(x));
 
-  // ---------- TOOLING DETECTION ----------
-  const tooling = [];
+//   // ---------- TOOLING DETECTION ----------
+//   const tooling = [];
 
-  if (
-    hasEnd("dockerfile") ||
-    hasEnd("docker-compose.yml") ||
-    hasAnyIncludes(["/dockerfile"])
-  ) {
-    tooling.push("Docker");
-  }
-  if (hasAnyEnd(["webpack.config.js", "webpack.config.ts"]))
-    tooling.push("Webpack");
-  if (hasAnyEnd(["vite.config.js", "vite.config.ts"])) tooling.push("Vite");
-  if (hasEnd("pyproject.toml")) tooling.push("Poetry");
-  if (hasEnd("requirements.txt")) tooling.push("pip");
-  if (hasEnd("pnpm-lock.yaml")) tooling.push("pnpm");
-  if (hasEnd("yarn.lock")) tooling.push("yarn");
-  if (hasEnd("package-lock.json")) tooling.push("npm");
+//   if (
+//     hasEnd("dockerfile") ||
+//     hasEnd("docker-compose.yml") ||
+//     hasAnyIncludes(["/dockerfile"])
+//   ) {
+//     tooling.push("Docker");
+//   }
+//   if (hasAnyEnd(["webpack.config.js", "webpack.config.ts"]))
+//     tooling.push("Webpack");
+//   if (hasAnyEnd(["vite.config.js", "vite.config.ts"])) tooling.push("Vite");
+//   if (hasEnd("pyproject.toml")) tooling.push("Poetry");
+//   if (hasEnd("requirements.txt")) tooling.push("pip");
+//   if (hasEnd("pnpm-lock.yaml")) tooling.push("pnpm");
+//   if (hasEnd("yarn.lock")) tooling.push("yarn");
+//   if (hasEnd("package-lock.json")) tooling.push("npm");
 
-  // ---------- BACKEND DETECTION (SCORING) ----------
-  const backendCandidates = [
-    {
-      name: "Django",
-      score: () => {
-        let s = 0;
-        if (hasAnyEnd(["manage.py"])) s += 4;
-        if (hasAnyIncludes(["/settings.py", "/settings/"])) s += 3;
-        if (hasAnyEnd(["urls.py"])) s += 3;
-        if (hasAnyEnd(["wsgi.py", "asgi.py"])) s += 1;
-        return s;
-      },
-    },
-    {
-      name: "FastAPI",
-      score: () => {
-        let s = 0;
-        if (hasAnyEnd(["main.py", "app.py"])) s += 2;
-        if (hasAnyEnd(["requirements.txt", "pyproject.toml"])) s += 1;
-        // better detection with content, but path-only still ok
-        if (hasAnyIncludes(["fastapi"])) s += 2; // folder naming sometimes
-        return s;
-      },
-    },
-    {
-      name: "Flask",
-      score: () => {
-        let s = 0;
-        if (hasAnyEnd(["app.py", "wsgi.py"])) s += 2;
-        if (hasAnyEnd(["requirements.txt", "pyproject.toml"])) s += 1;
-        if (hasAnyIncludes(["flask"])) s += 1;
-        return s;
-      },
-    },
-    {
-      name: "Spring Boot",
-      score: () => {
-        let s = 0;
-        if (hasAnyEnd(["pom.xml"])) s += 4;
-        if (hasAnyEnd(["build.gradle", "build.gradle.kts"])) s += 4;
-        if (hasAnyIncludes(["src/main/java", "src/main/kotlin"])) s += 3;
-        if (
-          hasAnyEnd([
-            "application.yml",
-            "application.yaml",
-            "application.properties",
-          ])
-        )
-          s += 2;
-        return s;
-      },
-    },
-    {
-      name: "Rails",
-      score: () => {
-        let s = 0;
-        if (hasEnd("gemfile")) s += 4;
-        if (hasAnyIncludes(["config/routes.rb"])) s += 3;
-        if (hasAnyIncludes(["app/controllers"])) s += 2;
-        return s;
-      },
-    },
-    {
-      name: "Laravel",
-      score: () => {
-        let s = 0;
-        if (hasEnd("artisan")) s += 4;
-        if (hasEnd("composer.json")) s += 3;
-        if (hasAnyIncludes(["routes/web.php", "routes/api.php"])) s += 2;
-        return s;
-      },
-    },
-    {
-      name: "Next.js",
-      score: () => {
-        const hasNextConfig = hasAnyEnd([
-          "next.config.js",
-          "next.config.ts",
-          "next.config.mjs",
-        ]);
+//   // ---------- BACKEND DETECTION (SCORING) ----------
+//   const backendCandidates = [
+//     {
+//       name: "Django",
+//       score: () => {
+//         let s = 0;
+//         if (hasAnyEnd(["manage.py"])) s += 4;
+//         if (hasAnyIncludes(["/settings.py", "/settings/"])) s += 3;
+//         if (hasAnyEnd(["urls.py"])) s += 3;
+//         if (hasAnyEnd(["wsgi.py", "asgi.py"])) s += 1;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "FastAPI",
+//       score: () => {
+//         let s = 0;
+//         if (hasAnyEnd(["main.py", "app.py"])) s += 2;
+//         if (hasAnyEnd(["requirements.txt", "pyproject.toml"])) s += 1;
+//         // better detection with content, but path-only still ok
+//         if (hasAnyIncludes(["fastapi"])) s += 2; // folder naming sometimes
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Flask",
+//       score: () => {
+//         let s = 0;
+//         if (hasAnyEnd(["app.py", "wsgi.py"])) s += 2;
+//         if (hasAnyEnd(["requirements.txt", "pyproject.toml"])) s += 1;
+//         if (hasAnyIncludes(["flask"])) s += 1;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Spring Boot",
+//       score: () => {
+//         let s = 0;
+//         if (hasAnyEnd(["pom.xml"])) s += 4;
+//         if (hasAnyEnd(["build.gradle", "build.gradle.kts"])) s += 4;
+//         if (hasAnyIncludes(["src/main/java", "src/main/kotlin"])) s += 3;
+//         if (
+//           hasAnyEnd([
+//             "application.yml",
+//             "application.yaml",
+//             "application.properties",
+//           ])
+//         )
+//           s += 2;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Rails",
+//       score: () => {
+//         let s = 0;
+//         if (hasEnd("gemfile")) s += 4;
+//         if (hasAnyIncludes(["config/routes.rb"])) s += 3;
+//         if (hasAnyIncludes(["app/controllers"])) s += 2;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Laravel",
+//       score: () => {
+//         let s = 0;
+//         if (hasEnd("artisan")) s += 4;
+//         if (hasEnd("composer.json")) s += 3;
+//         if (hasAnyIncludes(["routes/web.php", "routes/api.php"])) s += 2;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Next.js",
+//       score: () => {
+//         const hasNextConfig = hasAnyEnd([
+//           "next.config.js",
+//           "next.config.ts",
+//           "next.config.mjs",
+//         ]);
 
-        if (!hasNextConfig) return 0;
+//         if (!hasNextConfig) return 0;
 
-        const hasRealNextStructure =
-          paths.some((p) => p.startsWith("pages/_app.")) ||
-          paths.some((p) => p.startsWith("pages/_document.")) ||
-          paths.some((p) => p.startsWith("app/layout.")) ||
-          paths.some((p) => p.startsWith("app/page."));
+//         const hasRealNextStructure =
+//           paths.some((p) => p.startsWith("pages/_app.")) ||
+//           paths.some((p) => p.startsWith("pages/_document.")) ||
+//           paths.some((p) => p.startsWith("app/layout.")) ||
+//           paths.some((p) => p.startsWith("app/page."));
 
-        if (!hasRealNextStructure) return 0;
-        console.log(
-          "NEXT CONFIG MATCHES:",
-          paths.filter((p) => p.includes("next.config")),
-        );
+//         if (!hasRealNextStructure) return 0;
+//         console.log(
+//           "NEXT CONFIG MATCHES:",
+//           paths.filter((p) => p.includes("next.config")),
+//         );
 
-        return 10;
-      },
-    },
+//         return 10;
+//       },
+//     },
 
-    {
-      name: "Express/Node",
-      score: () => {
-        let s = 0;
-        if (hasEnd("package.json")) s += 2;
-        if (
-          hasAnyEnd([
-            "server.js",
-            "server.ts",
-            "app.js",
-            "app.ts",
-            "index.js",
-            "index.ts",
-          ])
-        )
-          s += 3;
-        if (hasAnyIncludes(["routes/", "/routes/"])) s += 2;
-        return s;
-      },
-    },
-    {
-      name: ".NET",
-      score: () => {
-        let s = 0;
-        if (paths.some((p) => p.endsWith(".csproj"))) s += 4;
-        if (hasAnyEnd(["program.cs"])) s += 3;
-        if (hasAnyIncludes(["controllers/"])) s += 2;
-        return s;
-      },
-    },
-    {
-      name: "Go",
-      score: () => {
-        let s = 0;
-        if (hasEnd("go.mod")) s += 4;
-        if (hasAnyEnd(["main.go"])) s += 3;
-        return s;
-      },
-    },
-    {
-      name: "Rust",
-      score: () => {
-        let s = 0;
-        if (hasEnd("cargo.toml")) s += 4;
-        if (hasAnyIncludes(["src/main.rs"])) s += 3;
-        return s;
-      },
-    },
-  ];
+//     {
+//       name: "Express/Node",
+//       score: () => {
+//         let s = 0;
+//         if (hasEnd("package.json")) s += 2;
+//         if (
+//           hasAnyEnd([
+//             "server.js",
+//             "server.ts",
+//             "app.js",
+//             "app.ts",
+//             "index.js",
+//             "index.ts",
+//           ])
+//         )
+//           s += 3;
+//         if (hasAnyIncludes(["routes/", "/routes/"])) s += 2;
+//         return s;
+//       },
+//     },
+//     {
+//       name: ".NET",
+//       score: () => {
+//         let s = 0;
+//         if (paths.some((p) => p.endsWith(".csproj"))) s += 4;
+//         if (hasAnyEnd(["program.cs"])) s += 3;
+//         if (hasAnyIncludes(["controllers/"])) s += 2;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Go",
+//       score: () => {
+//         let s = 0;
+//         if (hasEnd("go.mod")) s += 4;
+//         if (hasAnyEnd(["main.go"])) s += 3;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Rust",
+//       score: () => {
+//         let s = 0;
+//         if (hasEnd("cargo.toml")) s += 4;
+//         if (hasAnyIncludes(["src/main.rs"])) s += 3;
+//         return s;
+//       },
+//     },
+//   ];
 
-  const backendScores = backendCandidates
-    .map((c) => ({ framework: c.name, score: c.score() }))
-    .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score);
+//   const backendScores = backendCandidates
+//     .map((c) => ({ framework: c.name, score: c.score() }))
+//     .filter((x) => x.score > 0)
+//     .sort((a, b) => b.score - a.score);
 
-  const backend = backendScores[0]?.framework || "None";
-  const frontendPaths = paths.filter(
-    (p) =>
-      !p.includes("documentation/") &&
-      !p.includes("docs/") &&
-      !p.includes("antora/") &&
-      !p.includes("samples/") &&
-      !p.includes("example/"),
-  );
+//   const backend = backendScores[0]?.framework || "None";
+//   const frontendPaths = paths.filter(
+//     (p) =>
+//       !p.includes("documentation/") &&
+//       !p.includes("docs/") &&
+//       !p.includes("antora/") &&
+//       !p.includes("samples/") &&
+//       !p.includes("example/"),
+//   );
 
-  const fHasEnd = (name) => frontendPaths.some((p) => p.endsWith(name));
-  const fHasAnyEnd = (names) => names.some((n) => fHasEnd(n));
-  const fHasIncludes = (part) => frontendPaths.some((p) => p.includes(part));
-  const fHasAnyIncludes = (parts) => parts.some((x) => fHasIncludes(x));
+//   const fHasEnd = (name) => frontendPaths.some((p) => p.endsWith(name));
+//   const fHasAnyEnd = (names) => names.some((n) => fHasEnd(n));
+//   const fHasIncludes = (part) => frontendPaths.some((p) => p.includes(part));
+//   const fHasAnyIncludes = (parts) => parts.some((x) => fHasIncludes(x));
 
-  const frontendCandidates = [
-    {
-      name: "Next.js",
-      score: () => {
-        const hasNextConfig = fHasAnyEnd([
-          "next.config.js",
-          "next.config.ts",
-          "next.config.mjs",
-        ]);
+//   const frontendCandidates = [
+//     {
+//       name: "Next.js",
+//       score: () => {
+//         const hasNextConfig = fHasAnyEnd([
+//           "next.config.js",
+//           "next.config.ts",
+//           "next.config.mjs",
+//         ]);
 
-        if (!hasNextConfig) return 0;
+//         if (!hasNextConfig) return 0;
 
-        const hasRealNextStructure =
-          frontendPaths.some((p) => p.startsWith("pages/_app.")) ||
-          frontendPaths.some((p) => p.startsWith("pages/_document.")) ||
-          frontendPaths.some((p) => p.startsWith("app/layout.")) ||
-          frontendPaths.some((p) => p.startsWith("app/page."));
+//         const hasRealNextStructure =
+//           frontendPaths.some((p) => p.startsWith("pages/_app.")) ||
+//           frontendPaths.some((p) => p.startsWith("pages/_document.")) ||
+//           frontendPaths.some((p) => p.startsWith("app/layout.")) ||
+//           frontendPaths.some((p) => p.startsWith("app/page."));
 
-        if (!hasRealNextStructure) return 0;
+//         if (!hasRealNextStructure) return 0;
 
-        return 10;
-      },
-    },
+//         return 10;
+//       },
+//     },
 
-    {
-      name: "React",
-      score: () => {
-        let s = 0;
-        if (hasEnd("package.json")) s += 2;
-        if (
-          hasAnyIncludes([
-            "src/index.tsx",
-            "src/main.tsx",
-            "src/index.jsx",
-            "src/main.jsx",
-          ])
-        )
-          s += 4;
-        if (hasAnyIncludes(["src/app.tsx", "src/app.jsx"])) s += 2;
-        if (hasAnyIncludes(["frontend/src", "frontend/js"])) s += 2;
-        return s;
-      },
-    },
-    {
-      name: "Vue",
-      score: () => {
-        let s = 0;
-        if (hasEnd("package.json")) s += 2;
-        if (hasAnyEnd(["vue.config.js", "vite.config.js", "vite.config.ts"]))
-          s += 1;
-        if (hasAnyIncludes(["src/main.js", "src/main.ts"])) s += 3;
-        return s;
-      },
-    },
-    {
-      name: "Angular",
-      score: () => {
-        let s = 0;
-        if (hasEnd("angular.json")) s += 5;
-        if (hasEnd("package.json")) s += 1;
-        if (hasAnyIncludes(["src/main.ts"])) s += 2;
-        return s;
-      },
-    },
-  ];
+//     {
+//       name: "React",
+//       score: () => {
+//         let s = 0;
+//         if (hasEnd("package.json")) s += 2;
+//         if (
+//           hasAnyIncludes([
+//             "src/index.tsx",
+//             "src/main.tsx",
+//             "src/index.jsx",
+//             "src/main.jsx",
+//           ])
+//         )
+//           s += 4;
+//         if (hasAnyIncludes(["src/app.tsx", "src/app.jsx"])) s += 2;
+//         if (hasAnyIncludes(["frontend/src", "frontend/js"])) s += 2;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Vue",
+//       score: () => {
+//         let s = 0;
+//         if (hasEnd("package.json")) s += 2;
+//         if (hasAnyEnd(["vue.config.js", "vite.config.js", "vite.config.ts"]))
+//           s += 1;
+//         if (hasAnyIncludes(["src/main.js", "src/main.ts"])) s += 3;
+//         return s;
+//       },
+//     },
+//     {
+//       name: "Angular",
+//       score: () => {
+//         let s = 0;
+//         if (hasEnd("angular.json")) s += 5;
+//         if (hasEnd("package.json")) s += 1;
+//         if (hasAnyIncludes(["src/main.ts"])) s += 2;
+//         return s;
+//       },
+//     },
+//   ];
 
-  const frontendScores = frontendCandidates
-    .map((c) => ({ framework: c.name, score: c.score() }))
-    .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score);
+//   const frontendScores = frontendCandidates
+//     .map((c) => ({ framework: c.name, score: c.score() }))
+//     .filter((x) => x.score > 0)
+//     .sort((a, b) => b.score - a.score);
 
-  const frontend = frontendScores[0]?.framework || "Unknown";
+//   const frontend = frontendScores[0]?.framework || "Unknown";
 
-  const detected = {
-    backend: backendScores.slice(0, 3),
-    frontend: frontendScores.slice(0, 3),
-    tooling,
-  };
+//   const detected = {
+//     backend: backendScores.slice(0, 3),
+//     frontend: frontendScores.slice(0, 3),
+//     tooling,
+//   };
 
-  return {
-    backend,
-    frontend,
-    tooling: [...new Set(tooling)],
-  };
-}
+//   return {
+//     backend,
+//     frontend,
+//     tooling: [...new Set(tooling)],
+//   };
+// }
 
 function scoreFile(path, framework) {
   const p = path?.toLowerCase();
@@ -418,25 +418,27 @@ function scoreFile(path, framework) {
   return score;
 }
 
-function bucketFiles(rankedFiles) {
-  const onlyPaths = rankedFiles.map((x) => x.path);
+// function bucketFiles(rankedFiles) {
+//   const onlyPaths = rankedFiles.map((x) => x.path);
 
-  const whatToReadFirst = onlyPaths.slice(0, 10);
-  const readNext = onlyPaths.slice(10, 22);
-  const skipForNow = onlyPaths.slice(22, 60);
+//   const whatToReadFirst = onlyPaths.slice(0, 10);
+//   const readNext = onlyPaths.slice(10, 22);
+//   const skipForNow = onlyPaths.slice(22, 60);
 
-  const readmeIndex = whatToReadFirst.findIndex((p) =>
-    p.toLowerCase().endsWith("readme.md"),
-  );
-  if (readmeIndex === -1) {
-    const readme = onlyPaths.find((p) => p.toLowerCase().endsWith("readme.md"));
-    if (readme) {
-      whatToReadFirst.unshift(readme);
-      if (whatToReadFirst.length > 10) whatToReadFirst.pop();
-    }
-  }
+//   const readmeIndex = whatToReadFirst.findIndex((p) =>
+//     p.toLowerCase().endsWith("readme.md"),
+//   );
+//   if (readmeIndex === -1) {
+//     const readme = onlyPaths.find((p) => p.toLowerCase().endsWith("readme.md"));
+//     if (readme) {
+//       whatToReadFirst.unshift(readme);
+//       if (whatToReadFirst.length > 10) whatToReadFirst.pop();
+//     }
+//   }
 
-  return { whatToReadFirst, readNext, skipForNow };
-}
+//   return { whatToReadFirst, readNext, skipForNow };
+// }
 
-module.exports = { bucketFiles, detectFramework, scoreFile };
+
+
+module.exports = { scoreFile };

@@ -1,5 +1,18 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { rankRepository } = require("../routes/rankingEngine");
+
 require("dotenv/config");
+
+function githubHeaders() {
+  return {
+    Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+  };
+}
+
+
+const GITHUB_API = "https://api.github.com";
+
 
 // 1. Initialize the API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -20,8 +33,8 @@ const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
 const IGNORE_EXTENSIONS = [".css", ".svg"];
 
 const IGNORE_PATTERNS = [
-  ".test.", // test files
-  "__tests__", // test folders
+  ".test.", 
+  "__tests__", 
 ];
 
 function parseGithubRepo(repoUrl) {
@@ -69,22 +82,18 @@ function filterNonCodeFiles(rawFileList) {
   return rawFileList.filter((file) => {
     const lower = file.toLowerCase();
 
-    // ❌ ignore folders
     if (IGNORE_FOLDERS.some((folder) => lower.includes(folder))) {
       return false;
     }
 
-    // ❌ ignore image extensions
     if (IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext))) {
       return false;
     }
 
-    // ❌ ignore other extensions (css, svg)
     if (IGNORE_EXTENSIONS.some((ext) => lower.endsWith(ext))) {
       return false;
     }
 
-    // ❌ ignore test files / folders
     if (IGNORE_PATTERNS.some((pattern) => lower.includes(pattern))) {
       return false;
     }
@@ -92,14 +101,14 @@ function filterNonCodeFiles(rawFileList) {
       return false;
     }
 
-    return true; // ✅ keep only relevant code/config files
+    return true;
   });
 }
 function fileArrayToString(files) {
   return `"${files.join(", ")}"`;
 }
 
-/////////////////////////////////////////////////
+
 async function fetchAllFiles(repoUrl) {
   try {
     const { owner, repo } = parseGithubRepo(repoUrl);
@@ -227,10 +236,101 @@ async function fetchFileContent(owner, repo, filePath) {
   }
 }
 
+async function fetchRepoLanguages(owner, repo) {
+  // const res = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/languages`);
+  const res = await fetch(
+  `${GITHUB_API}/repos/${owner}/${repo}/languages`,
+  { headers: githubHeaders() }
+);
+
+
+  console.log("GitHub status:", res.status);
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.log("GitHub error:", text);
+    throw new Error("Failed to fetch repo languages");
+  }
+
+  return res.json();
+}
+
+
+
+async function fetchRepoTree(owner, repo) {
+  // const repoRes = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
+  //   headers: { Accept: "application/vnd.github+json" },
+  // });
+  const repoRes = await fetch(
+    `${GITHUB_API}/repos/${owner}/${repo}`,
+    { headers: githubHeaders() }
+  );
+
+  if (!repoRes.ok) throw new Error("Failed to fetch repo details for branch");
+
+  const repoDetails = await repoRes.json();
+  const branch = repoDetails.default_branch;
+
+  // const treeRes = await fetch(
+  //   `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+  //   {
+  //     headers: { Accept: "application/vnd.github+json" },
+  //   },
+  // );
+  const treeRes = await fetch(
+  `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+  { headers: githubHeaders() }
+);
+
+
+  if (!treeRes.ok) throw new Error("Failed to fetch repo tree");
+
+  const treeData = await treeRes.json();
+  return treeData.tree
+    .filter((item) => item.type === "blob")
+    .map((item) => item.path);
+}
+
+function getPrimaryLanguageFromBytes(languages = {}) {
+  const entries = Object.entries(languages);
+  if (entries.length === 0) return "Unknown";
+  entries.sort((a, b) => b[1] - a[1]);
+  return entries.slice(0, 2).map(([lang]) => lang);
+}
+
+async function getRankedFiles(repoUrl, topN = 10) {
+  const { owner, repo } = parseGithubRepo(repoUrl);
+
+  const languages = await fetchRepoLanguages(owner, repo);
+  const primaryLanguage = getPrimaryLanguageFromBytes(languages);
+
+  const allPaths = await fetchRepoTree(owner, repo);
+
+ 
+  const codeOnlyPaths = allPaths.filter(path => {
+    const ext = path.split('.').pop().toLowerCase();
+    return ['js', 'ts', 'jsx', 'tsx', 'py', 'go', 'java', 'rb'].includes(ext);
+  });
+
+  const ranked = await rankRepository(owner, repo, codeOnlyPaths);
+
+  return {
+    repo: `${owner}/${repo}`,
+    primaryLanguage,
+    totalFiles: allPaths.length, 
+    analyzedFiles: codeOnlyPaths.length, 
+    rankedFiles: ranked.slice(0, topN),
+  };
+}
+
+
+
+
 module.exports = {
   fetchAllFiles,
   getAllManifests,
   getRepoAnalysis,
   groupFilesByRoot,
   fetchFileContent,
+  getRankedFiles,
 };

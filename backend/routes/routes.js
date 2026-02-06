@@ -1,12 +1,12 @@
-// const { getRankedFiles } = require("../services");
 const { getExecutionFlow } = require("./signal");
 const { bucketFiles } = require("./utils");
 const { fetchAllFiles, fetchFileContent } = require("../extracted");
-const {
-  getAllManifests,
-  getRepoAnalysis,
-  groupFilesByRoot,
-} = require("../new");
+const {getAllManifests,getRepoAnalysis, groupFilesByRoot,} = require("../new");
+const { getRankedFiles } = require("../services/repoAnalyser.services");
+
+
+
+
 
 async function gitRoutes(fastify, options) {
   fastify.get("/analyze", async (req, reply) => {
@@ -35,6 +35,12 @@ async function gitRoutes(fastify, options) {
       executionFlow: getExecutionFlow(ranked.framework),
     };
   });
+
+
+
+
+
+
 
   fastify.post("/analyze-repo", async (req, reply) => {
     try {
