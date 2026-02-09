@@ -355,7 +355,7 @@ async function getRankedFiles(repoUrl, topN = 10) {
   let rankedFiles = ranked.slice(0, topN)
 
 let rankedFilesArray = formatRankedFilesForDisplay(rankedFiles);
-return `Ranked File Order:\n\n${rankedFilesArray.join("\n")}`;
+return `⭐Top 10 Ranked File Order:\n${rankedFilesArray.join("\n")}`;
 
   // return {
   //   repo: `${owner}/${repo}`,

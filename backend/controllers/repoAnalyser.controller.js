@@ -42,7 +42,8 @@ const analyzerepo = async (req, reply) => {
         res.rawFileList.join("\n"),
         manifestContent
       );
-
+  let rankedfiles = await getRankedFiles(url , topN = 10)
+   aiResult = aiResult + "\n\n"+rankedfiles
       return reply.send({
         success: true,
         analysis: aiResult,
@@ -69,7 +70,7 @@ const analyzerepo = async (req, reply) => {
       );
     }
    let rankedfiles = await getRankedFiles(url , topN = 10)
-   aiResult = aiResult + "\n"+rankedfiles
+   aiResult = aiResult + "\n\n"+rankedfiles
     return reply.send({
       success: true,
       analysis: aiResult,
