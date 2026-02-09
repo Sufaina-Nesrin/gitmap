@@ -126,12 +126,12 @@ function Home() {
 
             Home
           </li> */}
-          <li
+          {/* <li
             onClick={() => navigate("/pricing")}
             className="cursor-pointer hover:text-emerald-400 transition"
           >
             Pricing
-          </li>
+          </li> */}
           {/* <li
             onClick={() => navigate("/login")}
             className="cursor-pointer hover:text-emerald-400 transition"

@@ -4,7 +4,10 @@ const {
   getRepoAnalysis,
   groupFilesByRoot,
   fetchFileContent,
+  getRankedFiles,
+  getRepoAnalysisMultiple
 } = require("../services/repoAnalyser.services");
+
 
 const analyzerepo = async (req, reply) => {
   try {
@@ -60,15 +63,17 @@ const analyzerepo = async (req, reply) => {
         manifestPath
       );
 
-      aiResult = aiResult+ "\n\n"+ await getRepoAnalysis(
+      aiResult = aiResult+ "\n\n"+ await getRepoAnalysisMultiple(
         files.join("\n"),
         manifestContent
       );
     }
-
+   let rankedfiles = await getRankedFiles(url , topN = 10)
+   aiResult = aiResult + "\n"+rankedfiles
     return reply.send({
       success: true,
       analysis: aiResult,
+      rank: rankedfiles
     });
 
   } catch (error) {

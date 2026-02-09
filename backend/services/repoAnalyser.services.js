@@ -63,6 +63,7 @@ async function getRepoFilePaths(owner, repo, branch) {
     `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
     {
       headers: {
+        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
         Accept: "application/vnd.github+json",
       },
     },
@@ -116,11 +117,12 @@ async function fetchAllFiles(repoUrl) {
       `https://api.github.com/repos/${owner}/${repo}`,
       {
         headers: {
+          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
           Accept: "application/vnd.github+json",
         },
       },
     );
-
+console.log("GitHub status:", repoRes.status);
     if (!repoRes.ok) {
       throw new Error("Failed to fetch repository info");
     }
@@ -196,6 +198,43 @@ Use one line per bullet.
     console.error("Error analyzing repo:", error);
   }
 }
+async function getRepoAnalysisMultiple(fileList, manifestContent) {
+  const prompt = `
+Analyze the following subproject from a GitHub repository.
+
+Files:
+${fileList}
+
+Manifest:
+${manifestContent}
+
+Output STRICTLY in this format.
+Keep explanations short and beginner-friendly.
+Use one line per bullet.
+
+(Folder name + project type only. Example: "backend (api)" or "frontend (web)" or "shared (utils)")
+
+🚀 Entry Point:
+(Main file to start reading.)
+
+🔄 Code Flow:
+(Simple file flow using arrows or bullets.)
+
+🧩 Key Files:
+(List important files with one-line purpose.)
+
+🚫 Ignore Files:
+(List files beginners can skip initially.)
+`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    console.log(result.response.text());
+    return result.response.text();
+  } catch (error) {
+    console.error("Error analyzing repo:", error);
+  }
+}
 function groupFilesByRoot(rawFileList, manifestPaths) {
   const projects = {};
 
@@ -240,7 +279,7 @@ async function fetchRepoLanguages(owner, repo) {
   // const res = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/languages`);
   const res = await fetch(
   `${GITHUB_API}/repos/${owner}/${repo}/languages`,
-  { headers: githubHeaders() }
+  // { headers: githubHeaders() }
 );
 
 
@@ -263,7 +302,7 @@ async function fetchRepoTree(owner, repo) {
   // });
   const repoRes = await fetch(
     `${GITHUB_API}/repos/${owner}/${repo}`,
-    { headers: githubHeaders() }
+    // { headers: githubHeaders() }
   );
 
   if (!repoRes.ok) throw new Error("Failed to fetch repo details for branch");
@@ -279,7 +318,7 @@ async function fetchRepoTree(owner, repo) {
   // );
   const treeRes = await fetch(
   `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
-  { headers: githubHeaders() }
+  // { headers: githubHeaders() }
 );
 
 
@@ -313,18 +352,29 @@ async function getRankedFiles(repoUrl, topN = 10) {
   });
 
   const ranked = await rankRepository(owner, repo, codeOnlyPaths);
+  let rankedFiles = ranked.slice(0, topN)
 
-  return {
-    repo: `${owner}/${repo}`,
-    primaryLanguage,
-    totalFiles: allPaths.length, 
-    analyzedFiles: codeOnlyPaths.length, 
-    rankedFiles: ranked.slice(0, topN),
-  };
+let rankedFilesArray = formatRankedFilesForDisplay(rankedFiles);
+return `Ranked File Order:\n\n${rankedFilesArray.join("\n")}`;
+
+  // return {
+  //   repo: `${owner}/${repo}`,
+  //   primaryLanguage,
+  //   totalFiles: allPaths.length, 
+  //   analyzedFiles: codeOnlyPaths.length, 
+  //   rankedFiles: ranked.slice(0, topN),
+  // };
 }
 
 
-
+function formatRankedFilesForDisplay(rankedFiles) {
+  return rankedFiles.map((file, index) => {
+    if (index === 0) {
+      return `⭐ ${file.path}`;
+    }
+    return file.path;
+  });
+}
 
 module.exports = {
   fetchAllFiles,
@@ -333,4 +383,5 @@ module.exports = {
   groupFilesByRoot,
   fetchFileContent,
   getRankedFiles,
+  getRepoAnalysisMultiple
 };
