@@ -6,10 +6,7 @@ const connectDB = require("./db");
 fastify.register(require("./plugins/jwt"));
 
 fastify.register(require("@fastify/cors"), {
-  origin: [
-    "http://localhost:5173",
-    process.env.FRONTEND_URL
-  ],
+  origin: ["http://localhost:5173", process.env.FRONTEND_URL],
   credentials: true,
 });
 
