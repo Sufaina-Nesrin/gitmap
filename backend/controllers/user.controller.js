@@ -43,21 +43,22 @@ const createUser = async (request, reply) => {
       { expiresIn: "7d" },
     );
 
-    reply
-      .setCookie("token", token, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 7 * 24 * 60 * 60,
-      })
+   reply
+  .setCookie("token", token, {
+    httpOnly: true,
+    secure: true,       // REQUIRED on HTTPS
+    sameSite: "none",   // REQUIRED for cross-domain
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60,
+  })
+  .send({
+    message: "Login successful",
+    user: {
+      id: user._id,
+      email: user.email,
+    },
+  });
 
-      .send({
-        message: "Login successful",
-        user: {
-          id: user._id,
-          email: user.email,
-        },
-      });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return reply.code(400).send({ errors: error.errors });
@@ -92,20 +93,21 @@ const signInUser = async (request, reply) => {
     );
 
     reply
-      .setCookie("token", token, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 7 * 24 * 60 * 60,
-      })
+  .setCookie("token", token, {
+    httpOnly: true,
+    secure: true,       // REQUIRED on HTTPS
+    sameSite: "none",   // REQUIRED for cross-domain
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60,
+  })
+  .send({
+    message: "Login successful",
+    user: {
+      id: user._id,
+      email: user.email,
+    },
+  });
 
-      .send({
-        message: "Login successful",
-        user: {
-          id: user._id,
-          email: user.email,
-        },
-      });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return reply.code(400).send({ errors: error.errors });
