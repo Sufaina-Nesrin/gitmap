@@ -44,6 +44,12 @@ function Home() {
     getHistory();
   }, [analysis]);
 
+  const handleNewChat = () => {
+    setSelectedRepoId(null);
+    setAnalysedUrl("");
+    setAnalysis("")
+  }
+
   const handleLogout = async () => {
     try {
       await api.post("/api/auth/logout");
@@ -106,12 +112,15 @@ function Home() {
     setAnalysedUrl(repo.repoUrl);
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 py-4 border-b border-white/10 backdrop-blur bg-slate-950/80">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Gitmap Logo" style={{ width: "40px", height: "40px" }} />
+          <img
+            src="/logo.png"
+            alt="Gitmap Logo"
+            style={{ width: "40px", height: "40px" }}
+          />
           <span className="text-xl font-bold tracking-wide">
             Git<span className="text-emerald-400">map</span>
           </span>
@@ -150,6 +159,27 @@ function Home() {
       <div className="flex pt-[64px]">
         <aside className="fixed top-[64px] left-0 w-64 h-[calc(100vh-64px)] border-r border-white/10 bg-slate-950/60 backdrop-blur z-30">
           <div className="p-4">
+            <button
+            onClick={handleNewChat}
+              className="
+    w-full flex items-center gap-2
+    px-3 py-2 mb-4
+    rounded-lg
+    text-sm font-medium
+    text-slate-200
+    border border-white/10
+    bg-white/5
+    hover:bg-white/10
+    hover:text-emerald-400
+    transition
+  "
+            >
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400">
+                +
+              </span>
+              New Chat
+            </button>
+
             <h2 className="text-sm font-semibold text-slate-400 mb-4 uppercase tracking-wider">
               History
             </h2>
