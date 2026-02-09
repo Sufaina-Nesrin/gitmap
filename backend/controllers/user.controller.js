@@ -2,7 +2,7 @@ const User = require("../models/User.model");
 const { z } = require("zod");
 const bcrypt = require("bcrypt");
 
-/* -------------------- Zod Schemas -------------------- */
+
 
 const createUserSchema = z.object({
   username: z.string().min(3).max(30),
@@ -15,22 +15,18 @@ const signInSchema = z.object({
   password: z.string().min(8),
 });
 
-/* -------------------- Controllers -------------------- */
 
 const createUser = async (request, reply) => {
   try {
-    // Validate request body
     const validatedData = createUserSchema.parse(request.body);
 
     const { email, password, username } = validatedData;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return reply.code(409).send({ message: "User already exists" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -39,8 +35,6 @@ const createUser = async (request, reply) => {
       password: hashedPassword,
     });
 
-    // Generate JWT
-    // Generate JWT
     const token = await reply.jwtSign(
       {
         userId: user._id,
@@ -123,10 +117,10 @@ const signInUser = async (request, reply) => {
 const logout = async (request, reply) => {
   reply
     .clearCookie("token", {
-      path: "/",          // must match cookie path
+      path: "/",         
       httpOnly: true,
-      sameSite: "none",   // match what you used when setting
-      secure: true,       // true in production (https)
+      sameSite: "none",   
+      secure: true,       
     })
     .send({
       success: true,

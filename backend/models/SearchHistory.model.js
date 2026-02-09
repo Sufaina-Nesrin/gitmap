@@ -27,7 +27,6 @@ const searchHistorySchema = new mongoose.Schema(
   }
 );
 
-// Optional compound index (very useful)
 searchHistorySchema.index({ user: 1, createdAt: -1 });
 
 module.exports = mongoose.model("SearchHistory", searchHistorySchema);

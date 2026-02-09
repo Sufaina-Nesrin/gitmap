@@ -3,21 +3,21 @@ const SearchHistory = require("../models/SearchHistory.model");
 
 const addSearchHistory = async (request, reply) => {
   try {
-    const userId = request.user.userId; // coming from JWT middleware
+    const userId = request.user.userId; 
     const {repoUrl, analysis } = request.body;
 
     if (!repoUrl) {
       return reply.code(400).send({ message: "Query is required" });
     }
 
-    // 1️⃣ Insert new search
+
     await SearchHistory.create({
       user: userId,
       repoUrl,
       analysis,
     });
 
-    // 2️⃣ Keep only latest 10 searches
+
     const latestIds = await SearchHistory.find({ user: userId })
       .sort({ createdAt: -1 })
       .limit(10)
@@ -28,7 +28,7 @@ const addSearchHistory = async (request, reply) => {
       _id: { $nin: latestIds },
     });
 
-    // 3️⃣ Return updated history
+
     const history = await SearchHistory.find({ user: userId })
       .sort({ createdAt: -1 })
       .limit(10)
@@ -45,7 +45,7 @@ const addSearchHistory = async (request, reply) => {
 
 const getAllSearchHistory = async (request, reply) => {
   try {
-    const userId = request.user.userId; // from JWT middleware
+    const userId = request.user.userId; 
 
     const history = await SearchHistory.find({ user: userId })
       .sort({ createdAt: -1 })

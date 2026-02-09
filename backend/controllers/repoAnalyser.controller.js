@@ -32,7 +32,7 @@ const analyzerepo = async (req, reply) => {
     let aiResult = "";
     const manifests = getAllManifests(res.rawFileList);
 
-    // ✅ Single project
+
     if (manifests.length <= 1) {
       const manifestContent = manifests[0]
         ? await fetchFileContent(res.owner, res.repo, manifests[0])
@@ -50,7 +50,7 @@ const analyzerepo = async (req, reply) => {
       });
     }
 
-    // ✅ Monorepo / multiple projects
+  
     const projects = groupFilesByRoot(res.rawFileList, manifests);
 
     for (const [projectName, files] of Object.entries(projects)) {

@@ -24,14 +24,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: 8,
-      select: false, // do not return password by default
+      select: false, 
     },
   },
   {
-    timestamps: true, // createdAt & updatedAt
+    timestamps: true, 
     versionKey: false,
   },
 );
 
-// Prevent model overwrite in dev / hot-reload environments
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);

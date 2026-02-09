@@ -4,7 +4,7 @@ async function searchHistoryRoutes(fastify) {
   fastify.post(
     "/history",
     {
-      preHandler: [fastify.authenticate], // JWT middleware
+      preHandler: [fastify.authenticate], 
     },
     addSearchHistory
   );

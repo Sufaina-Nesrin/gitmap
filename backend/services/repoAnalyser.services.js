@@ -10,11 +10,9 @@ function githubHeaders() {
   };
 }
 
-
 const GITHUB_API = "https://api.github.com";
 
 
-// 1. Initialize the API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 const IGNORE_FOLDERS = [
@@ -76,8 +74,8 @@ async function getRepoFilePaths(owner, repo, branch) {
   const data = await res.json();
 
   return data.tree
-    .filter((item) => item.type === "blob") // only files
-    .map((item) => item.path); // extract file path
+    .filter((item) => item.type === "blob") 
+    .map((item) => item.path); 
 }
 function filterNonCodeFiles(rawFileList) {
   return rawFileList.filter((file) => {
@@ -239,7 +237,7 @@ function groupFilesByRoot(rawFileList, manifestPaths) {
   const projects = {};
 
   for (const manifestPath of manifestPaths) {
-    const root = manifestPath.split("/")[0]; // frontend, backend
+    const root = manifestPath.split("/")[0]; 
 
     projects[root] = rawFileList.filter((file) => file.startsWith(root + "/"));
   }
@@ -276,10 +274,9 @@ async function fetchFileContent(owner, repo, filePath) {
 }
 
 async function fetchRepoLanguages(owner, repo) {
-  // const res = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/languages`);
   const res = await fetch(
   `${GITHUB_API}/repos/${owner}/${repo}/languages`,
-  // { headers: githubHeaders() }
+  { headers: githubHeaders() }
 );
 
 
@@ -297,28 +294,18 @@ async function fetchRepoLanguages(owner, repo) {
 
 
 async function fetchRepoTree(owner, repo) {
-  // const repoRes = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
-  //   headers: { Accept: "application/vnd.github+json" },
-  // });
   const repoRes = await fetch(
     `${GITHUB_API}/repos/${owner}/${repo}`,
-    // { headers: githubHeaders() }
+    { headers: githubHeaders() }
   );
 
   if (!repoRes.ok) throw new Error("Failed to fetch repo details for branch");
-
   const repoDetails = await repoRes.json();
   const branch = repoDetails.default_branch;
 
-  // const treeRes = await fetch(
-  //   `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
-  //   {
-  //     headers: { Accept: "application/vnd.github+json" },
-  //   },
-  // );
   const treeRes = await fetch(
   `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
-  // { headers: githubHeaders() }
+  { headers: githubHeaders() }
 );
 
 
@@ -356,21 +343,13 @@ async function getRankedFiles(repoUrl, topN = 10) {
 
 let rankedFilesArray = formatRankedFilesForDisplay(rankedFiles);
 return `⭐Top 10 Ranked File Order:\n${rankedFilesArray.join("\n")}`;
-
-  // return {
-  //   repo: `${owner}/${repo}`,
-  //   primaryLanguage,
-  //   totalFiles: allPaths.length, 
-  //   analyzedFiles: codeOnlyPaths.length, 
-  //   rankedFiles: ranked.slice(0, topN),
-  // };
 }
 
 
 function formatRankedFilesForDisplay(rankedFiles) {
   return rankedFiles.map((file, index) => {
     if (index === 0) {
-      return `⭐ ${file.path}`;
+      return `${file.path}`;
     }
     return file.path;
   });
